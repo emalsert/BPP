@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, Plus, Trash } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/Card';
 import { useDeleteSection } from '@/lib/queries';
 import { SessionRow } from '@/features/sessions/SessionRow';
@@ -15,6 +15,7 @@ interface SectionCardProps {
 
 export function SectionCard({ section, pageId, people, selfId }: SectionCardProps) {
   const [addingSession, setAddingSession] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const deleteSection = useDeleteSection(pageId);
 
   function handleDeleteSection() {
@@ -24,36 +25,55 @@ export function SectionCard({ section, pageId, people, selfId }: SectionCardProp
   }
 
   const nextPosition = section.session.length;
+  const doneCount = section.session.filter((s) => s.status === 'done').length;
 
   return (
     <Card className="p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white">{section.title}</h3>
+      <div className="flex items-center justify-between gap-2">
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          className="flex min-h-11 flex-1 items-center gap-2 text-left"
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? (
+            <CaretDown size={18} className="shrink-0 text-white/50" />
+          ) : (
+            <CaretUp size={18} className="shrink-0 text-white/50" />
+          )}
+          <h3 className="truncate text-lg font-semibold text-white">{section.title}</h3>
+          <span className="shrink-0 text-sm text-white/50">
+            {doneCount}/{section.session.length}
+          </span>
+        </button>
         <button
           onClick={handleDeleteSection}
-          className="rounded-lg p-2 text-white/40 hover:bg-red-500/20 hover:text-red-200"
+          className="shrink-0 rounded-lg p-2 text-white/40 hover:bg-red-500/20 hover:text-red-200"
           aria-label="Supprimer la section"
         >
           <Trash size={18} />
         </button>
       </div>
 
-      <div className="space-y-2">
-        {section.session.map((session) => (
-          <SessionRow key={session.id} session={session} pageId={pageId} people={people} selfId={selfId} />
-        ))}
-        {section.session.length === 0 && (
-          <p className="py-2 text-sm text-white/50">Pas encore de séance.</p>
-        )}
-      </div>
+      {!collapsed && (
+        <>
+          <div className="mt-3 space-y-2">
+            {section.session.map((session) => (
+              <SessionRow key={session.id} session={session} pageId={pageId} people={people} selfId={selfId} />
+            ))}
+            {section.session.length === 0 && (
+              <p className="py-2 text-sm text-white/50">Pas encore de séance.</p>
+            )}
+          </div>
 
-      <button
-        onClick={() => setAddingSession(true)}
-        className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 text-sm text-white/70 hover:border-white/40 hover:text-white"
-      >
-        <Plus size={16} />
-        Ajouter une séance
-      </button>
+          <button
+            onClick={() => setAddingSession(true)}
+            className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 text-sm text-white/70 hover:border-white/40 hover:text-white"
+          >
+            <Plus size={16} />
+            Ajouter une séance
+          </button>
+        </>
+      )}
 
       {addingSession && (
         <SessionFormDialog
